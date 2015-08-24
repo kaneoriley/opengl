@@ -1,0 +1,43 @@
+buildscript {
+    repositories {
+        jcenter()
+        mavenLocal()
+        maven { url "https://jitpack.io" }
+    }
+
+    dependencies {
+        classpath 'com.kaneoriley:android-gradle-extension:0.1.6b'
+    }
+}
+allprojects {
+    repositories {
+        jcenter()
+        mavenLocal()
+        maven { url "https://jitpack.io" }
+    }
+
+    group = 'com.kaneoriley'
+    version = '1.0-SNAPSHOT'
+}
+
+apply plugin: 'com.kaneoriley.android.library'
+
+android {
+    compileSdkVersion 23
+    buildToolsVersion '23.0.0'
+
+    defaultConfig {
+        minSdkVersion 15
+        targetSdkVersion 23
+    }
+
+    //noinspection GroovyAssignabilityCheck
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_7
+        targetCompatibility JavaVersion.VERSION_1_7
+    }
+
+    lintOptions {
+        abortOnError false
+    }
+}
