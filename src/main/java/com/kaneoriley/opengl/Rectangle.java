@@ -3,7 +3,7 @@ package com.kaneoriley.opengl;
 import android.opengl.GLES20;
 import android.support.annotation.NonNull;
 
-@SuppressWarnings({"FieldCanBeLocal", "unused"})
+@SuppressWarnings("unused")
 public class Rectangle extends Shape {
 
     private static final String VERTEX_SHADER_CODE =
@@ -39,15 +39,19 @@ public class Rectangle extends Shape {
         float bottom = height / 2;
         float top = -bottom;
 
-        float[] vertices = new float[] { left, top, depth, left, bottom, depth,
-                                         right, bottom, depth, right, top, depth };
+        float[] vertices = new float[] {
+                left, top, depth, left, bottom, depth,
+                right, bottom, depth, right, top, depth
+        };
 
         generateVertexBuffer(vertices);
         generateDrawListBuffer(DRAW_ORDER);
     }
 
-    public final void baseDraw(float[] mvpMatrix) {
+    public final void draw(@NonNull float[] mvpMatrix) {
         GLES20.glUseProgram(getProgram());
+
+        float[] objectMatrix = getObjectMatrix(mvpMatrix);
 
         int positionHandle = GLES20.glGetAttribLocation(getProgram(), "vPosition");
         GLES20.glEnableVertexAttribArray(positionHandle);
@@ -57,7 +61,7 @@ public class Rectangle extends Shape {
         GLES20.glUniform4fv(colorHandle, 1, getColor(), 0);
 
         int mvpMatrixHandle = GLES20.glGetUniformLocation(getProgram(), "uMVPMatrix");
-        GLES20.glUniformMatrix4fv(mvpMatrixHandle, 1, false, mvpMatrix, 0);
+        GLES20.glUniformMatrix4fv(mvpMatrixHandle, 1, false, objectMatrix, 0);
 
         GLES20.glDrawElements(GLES20.GL_TRIANGLES, DRAW_ORDER.length, GLES20.GL_UNSIGNED_SHORT, getDrawListBuffer());
         GLES20.glDisableVertexAttribArray(positionHandle);

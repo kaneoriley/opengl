@@ -11,13 +11,19 @@ import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.nio.ShortBuffer;
 
-@SuppressWarnings("MismatchedReadAndWriteOfArray")
 @Accessors(prefix = "m")
 public abstract class Shape {
 
     @NonNull
     private final float[] mModelMatrix = new float[16];
 
+    @NonNull
+    private final float[] mTranslate = { 0f, 0f, 0f };
+
+    @NonNull
+    private final float[] mScale = { 1f, 1f, 1f };
+
+    @SuppressWarnings("MismatchedReadAndWriteOfArray")
     @Getter
     @NonNull
     private final float[] mColor = new float[4];
@@ -27,15 +33,6 @@ public abstract class Shape {
 
     @Getter
     private FloatBuffer mVertexBuffer;
-
-    @Getter
-    private float[] mTranslation;
-
-    @Getter
-    private float[] mRotation;
-
-    @Getter
-    private float[] mScale;
 
     @Getter
     private int mProgram;
@@ -48,29 +45,73 @@ public abstract class Shape {
         }
 
         Matrix.setIdentityM(mModelMatrix, 0);
-
         mProgram = program;
     }
 
     @NonNull
-    public float[] getModelClone() {
+    public float[] getModelMatrixClone() {
         return mModelMatrix.clone();
+    }
+
+    @NonNull
+    public float[] getObjectMatrix(@NonNull float[] mvpMatrix) {
+        float[] temp = getModelMatrixClone();
+        Matrix.translateM(temp, 0, mTranslate[0], mTranslate[1], mTranslate[2]);
+        Matrix.scaleM(temp, 0, mScale[0], mScale[1], mScale[2]);
+        Matrix.multiplyMM(temp, 0, mvpMatrix, 0, temp, 0);
+        return temp;
     }
 
     public void setAlpha(float alpha) {
         mColor[3] = alpha;
     }
 
-    public void setTranslation(float x, float y, float z) {
-        mTranslation = new float[] { x, y, z };
+    public float getTranslationX() {
+        return mTranslate[0];
     }
 
-    public void setRotation(float a, float x, float y, float z) {
-        mRotation = new float[] { a, x, y, z };
+    public float getTranslationY() {
+        return mTranslate[1];
     }
 
-    public void setScale(float x, float y, float z) {
-        mScale = new float[] { x, y, z };
+    public float getTranslationZ() {
+        return mTranslate[2];
+    }
+
+    public void setTranslationX(float x) {
+        mTranslate[0] = x;
+    }
+
+    public void setTranslationY(float y) {
+        mTranslate[1] = y;
+    }
+
+    public void setTranslationZ(float z) {
+        mTranslate[2] = z;
+    }
+
+    public float getScaleX() {
+        return mScale[0];
+    }
+
+    public float getScaleY() {
+        return mScale[1];
+    }
+
+    public float getScaleZ() {
+        return mScale[2];
+    }
+
+    public void setScaleX(float x) {
+        mScale[0] = x;
+    }
+
+    public void setScaleY(float y) {
+        mScale[1] = y;
+    }
+
+    public void setScaleZ(float z) {
+        mScale[2] = z;
     }
 
     void generateDrawListBuffer(@NonNull short[] drawOrder) {
@@ -109,14 +150,5 @@ public abstract class Shape {
         return sb;
     }
 
-    public void draw(float[] mvpMatrix) {
-        float[] scratch = getModelClone();
-        Matrix.translateM(scratch, 0, mTranslation[0], mTranslation[1], mTranslation[2]);
-        Matrix.scaleM(scratch, 0, mScale[0], mScale[1], mScale[2]);
-        Matrix.rotateM(scratch, 0, mRotation[0], mRotation[1], mRotation[2], mRotation[3]);
-        Matrix.multiplyMM(scratch, 0, mvpMatrix, 0, scratch, 0);
-        baseDraw(scratch);
-    }
-
-    protected abstract void baseDraw(float[] mvpMatrix);
+    protected abstract void draw(@NonNull float[] mvpMatrix);
 }

@@ -3,7 +3,7 @@ package com.kaneoriley.opengl;
 import android.opengl.GLES20;
 import android.support.annotation.NonNull;
 
-@SuppressWarnings({"FieldCanBeLocal", "unused"})
+@SuppressWarnings("unused")
 public class Oval extends Shape {
 
     private static final String VERTEX_SHADER_CODE =
@@ -38,16 +38,18 @@ public class Oval extends Shape {
         vertices[2] = 0;
 
         for (int i = 1; i < 364; i++) {
-            vertices[(i * 3)] = (float) (Math.cos((Math.PI / 180) * (float) i)) * width;
-            vertices[(i * 3) + 1] = (float) (Math.sin((Math.PI / 180) * (float) i)) * height;
+            vertices[(i * 3)] = (float) (Math.cos((Math.PI / 180) * (float) i)) * (width / 2f);
+            vertices[(i * 3) + 1] = (float) (Math.sin((Math.PI / 180) * (float) i)) * (height / 2f);
             vertices[(i * 3) + 2] = depth;
         }
 
         generateVertexBuffer(vertices);
     }
 
-    public final void baseDraw(float[] mvpMatrix) {
+    public final void draw(@NonNull float[] mvpMatrix) {
         GLES20.glUseProgram(getProgram());
+
+        float[] objectMatrix = getObjectMatrix(mvpMatrix);
 
         int positionHandle = GLES20.glGetAttribLocation(getProgram(), "vPosition");
         GLES20.glEnableVertexAttribArray(positionHandle);
@@ -57,7 +59,7 @@ public class Oval extends Shape {
         GLES20.glUniform4fv(colorHandle, 1, getColor(), 0);
 
         int mvpMatrixHandle = GLES20.glGetUniformLocation(getProgram(), "mvpMatrix");
-        GLES20.glUniformMatrix4fv(mvpMatrixHandle, 1, false, mvpMatrix, 0);
+        GLES20.glUniformMatrix4fv(mvpMatrixHandle, 1, false, objectMatrix, 0);
 
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_FAN, 0, 364);
         GLES20.glDisableVertexAttribArray(positionHandle);

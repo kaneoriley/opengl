@@ -20,7 +20,7 @@ public abstract class Renderer implements GLSurfaceView.Renderer {
     }
 
     public static void checkGlError(String glOperation) {
-        int error= GLES20.glGetError();
+        int error = GLES20.glGetError();
         if (error != GLES20.GL_NO_ERROR) {
             log.error(glOperation + ": glError {}", error);
             throw new RuntimeException(glOperation + ": glError " + error);
