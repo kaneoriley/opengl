@@ -10,84 +10,119 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.nio.ShortBuffer;
+import java.util.Arrays;
 
 @Accessors(prefix = "m")
-public abstract class Shape {
+abstract class Shape {
+
+    abstract static class Helper<T extends Shape> {
+
+        public abstract void preDraw();
+
+        public abstract void render(@NonNull T shape, @NonNull float[] mvpMatrix);
+
+        public abstract void postDraw();
+    }
+
+    @Getter
+    static class Attribute {
+
+        @NonNull
+        private final String mName;
+
+        private final int mIndex;
+
+        Attribute(@NonNull String name, int index) {
+            mName = name;
+            mIndex = index;
+        }
+    }
 
     @NonNull
     private final float[] mModelMatrix = new float[16];
 
     @NonNull
-    private final float[] mTranslate = { 0f, 0f, 0f };
+    private final float[] mTranslation = { 0f, 0f, 0f };
 
     @NonNull
     private final float[] mScale = { 1f, 1f, 1f };
 
-    @SuppressWarnings("MismatchedReadAndWriteOfArray")
-    @Getter
     @NonNull
-    private final float[] mColor = new float[4];
+    private final float[] mColor = { 1f, 1f, 1f, 1f };
 
-    @Getter
-    private ShortBuffer mDrawListBuffer;
-
-    @Getter
-    private FloatBuffer mVertexBuffer;
-
-    @Getter
-    private int mProgram;
-
-    Shape(@NonNull float[] desiredColor, int program) {
-        int colorLength = desiredColor.length;
-        System.arraycopy(desiredColor, 0, mColor, 0, colorLength);
-        if (colorLength < 4) {
-            mColor[3] = 1.0f;
-        }
-
+    Shape() {
         Matrix.setIdentityM(mModelMatrix, 0);
-        mProgram = program;
     }
 
     @NonNull
-    public float[] getModelMatrixClone() {
-        return mModelMatrix.clone();
-    }
-
-    @NonNull
-    public float[] getObjectMatrix(@NonNull float[] mvpMatrix) {
-        float[] temp = getModelMatrixClone();
-        Matrix.translateM(temp, 0, mTranslate[0], mTranslate[1], mTranslate[2]);
+    protected float[] getObjectMatrix(@NonNull float[] mvpMatrix) {
+        float[] temp = mModelMatrix.clone();
+        Matrix.translateM(temp, 0, mTranslation[0], mTranslation[1], mTranslation[2]);
         Matrix.scaleM(temp, 0, mScale[0], mScale[1], mScale[2]);
         Matrix.multiplyMM(temp, 0, mvpMatrix, 0, temp, 0);
         return temp;
+    }
+
+    @NonNull
+    float[] getColorMatrix() {
+        return mColor;
+    }
+
+    @NonNull
+    public float[] getColor() {
+        return Arrays.copyOfRange(mColor, 0, 3);
+    }
+
+    public void setColor(@NonNull float[] color) {
+        if (color.length != 3) {
+            throw new IllegalArgumentException("color matrix must have exactly 3 values, for RGB");
+        } else {
+            System.arraycopy(color, 0, mColor, 0, 3);
+        }
     }
 
     public void setAlpha(float alpha) {
         mColor[3] = alpha;
     }
 
+    @NonNull
+    public float[] getTranslation() {
+        return mTranslation;
+    }
+
     public float getTranslationX() {
-        return mTranslate[0];
+        return mTranslation[0];
     }
 
     public float getTranslationY() {
-        return mTranslate[1];
+        return mTranslation[1];
     }
 
     public float getTranslationZ() {
-        return mTranslate[2];
+        return mTranslation[2];
+    }
+
+    public void setTranslation(float x, float y, float z) {
+        setTranslationX(x);
+        setTranslationY(y);
+        setTranslationZ(z);
     }
 
     public void setTranslationX(float x) {
-        mTranslate[0] = x;
+        mTranslation[0] = x;
     }
 
     public void setTranslationY(float y) {
-        mTranslate[1] = y;
+        mTranslation[1] = y;
     }
 
     public void setTranslationZ(float z) {
-        mTranslate[2] = z;
+        mTranslation[2] = z;
+    }
+
+    @NonNull
+    public float[] getScale() {
+        return mScale;
     }
 
     public float getScaleX() {
@@ -102,6 +137,12 @@ public abstract class Shape {
         return mScale[2];
     }
 
+    public void setScale(float x, float y, float z) {
+        setScaleX(x);
+        setScaleY(y);
+        setScaleZ(z);
+    }
+
     public void setScaleX(float x) {
         mScale[0] = x;
     }
@@ -114,14 +155,6 @@ public abstract class Shape {
         mScale[2] = z;
     }
 
-    void generateDrawListBuffer(@NonNull short[] drawOrder) {
-        mDrawListBuffer = toShortBuffer(drawOrder);
-    }
-
-    void generateVertexBuffer(@NonNull float[] vertices) {
-        mVertexBuffer = toFloatBuffer(vertices);
-    }
-
     protected static int createProgram(@NonNull String vertexShaderCode, @NonNull String fragmentShaderCode) {
         int vertexShader = Renderer.loadShader(GLES20.GL_VERTEX_SHADER, vertexShaderCode);
         int fragmentShader = Renderer.loadShader(GLES20.GL_FRAGMENT_SHADER, fragmentShaderCode);
@@ -132,7 +165,7 @@ public abstract class Shape {
         return program;
     }
 
-    public static FloatBuffer toFloatBuffer(@NonNull float[] array) {
+    static FloatBuffer generateFloatBuffer(@NonNull float[] array) {
         ByteBuffer bb = ByteBuffer.allocateDirect(array.length * 4);
         bb.order(ByteOrder.nativeOrder());
         FloatBuffer fb = bb.asFloatBuffer();
@@ -141,7 +174,7 @@ public abstract class Shape {
         return fb;
     }
 
-    public static ShortBuffer toShortBuffer(@NonNull short[] array) {
+    static ShortBuffer generateShortBuffer(@NonNull short[] array) {
         ByteBuffer bb = ByteBuffer.allocateDirect(array.length * 4);
         bb.order(ByteOrder.nativeOrder());
         ShortBuffer sb = bb.asShortBuffer();
@@ -149,6 +182,4 @@ public abstract class Shape {
         sb.position(0);
         return sb;
     }
-
-    protected abstract void draw(@NonNull float[] mvpMatrix);
 }
