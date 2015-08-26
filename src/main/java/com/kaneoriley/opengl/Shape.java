@@ -155,12 +155,17 @@ abstract class Shape {
         mScale[2] = z;
     }
 
-    protected static int createProgram(@NonNull String vertexShaderCode, @NonNull String fragmentShaderCode) {
-        int vertexShader = Renderer.loadShader(GLES20.GL_VERTEX_SHADER, vertexShaderCode);
-        int fragmentShader = Renderer.loadShader(GLES20.GL_FRAGMENT_SHADER, fragmentShaderCode);
+    protected static int createProgram(@NonNull String vertexShader,
+                                       @NonNull String fragmentShader,
+                                       Attribute... attributes) {
+        int vertexShaderHandle = Renderer.loadShader(GLES20.GL_VERTEX_SHADER, vertexShader);
+        int fragmentShaderHandle = Renderer.loadShader(GLES20.GL_FRAGMENT_SHADER, fragmentShader);
         int program = GLES20.glCreateProgram();
-        GLES20.glAttachShader(program, vertexShader);
-        GLES20.glAttachShader(program, fragmentShader);
+        GLES20.glAttachShader(program, vertexShaderHandle);
+        GLES20.glAttachShader(program, fragmentShaderHandle);
+        for (Attribute attribute : attributes) {
+            GLES20.glBindAttribLocation(program, attribute.getIndex(), attribute.getName());
+        }
         GLES20.glLinkProgram(program);
         return program;
     }
